@@ -1,13 +1,13 @@
 import streamlit as st
+import io
+import pandas as pd
 import tiktoken
 from loguru import logger
 
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 
-from langchain.document_loaders import PyPDFLoader
-from langchain.document_loaders import Docx2txtLoader
-from langchain.document_loaders import UnstructuredPowerPointLoader
+from langchain.document_loaders import PyPDFLoader, Docx2txtLoader, UnstructuredPowerPointLoader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -30,25 +30,28 @@ def main():
         st.session_state.conversation = None
 
     if "chat_history" not in st.session_state:
-        st.session_state.chat_history = None
+        st.session_state.chat_history = []
 
     if "processComplete" not in st.session_state:
-        st.session_state.processComplete = None
+        st.session_state.processComplete = False
 
     with st.sidebar:
-        uploaded_files =  st.file_uploader("Upload your file",type=['pdf','docx'],accept_multiple_files=True)
+        uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'pptx', 'csv'], accept_multiple_files=True)
         openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
         process = st.button("Process")
     if process:
         if not openai_api_key:
-            st.info("Please add your OpenAI API key to continue.")
+            st.warning("Please add your OpenAI API key to continue.")
+            st.stop()
+        if not uploaded_files:
+            st.warning("Please upload at least one document.")
             st.stop()
         files_text = get_text(uploaded_files)
         text_chunks = get_text_chunks(files_text)
-        vetorestore = get_vectorstore(text_chunks)
-     
-        st.session_state.conversation = get_conversation_chain(vetorestore,openai_api_key) 
+        vectorestore = get_vectorstore(text_chunks)
 
+        st.session_state.conversation = get_conversation_chain(vectorestore, openai_api_key)
+        
         st.session_state.processComplete = True
 
     if 'messages' not in st.session_state:
@@ -93,6 +96,12 @@ def tiktoken_len(text):
     tokenizer = tiktoken.get_encoding("cl100k_base")
     tokens = tokenizer.encode(text)
     return len(tokens)
+
+
+def get_text_from_csv(file_buffer):
+    df = pd.read_csv(file_buffer)
+    text_data = ' '.join(df.astype(str).sum())
+    return text_data
 
 def get_text(docs):
     doc_list = []
