@@ -95,25 +95,25 @@ def tiktoken_len(text):
     return len(tokens)
 
 def get_text(docs):
-
     doc_list = []
-    
     for doc in docs:
-        file_name = doc.name  # doc 객체의 이름을 파일 이름으로 사용
-        with open(file_name, "wb") as file:  # 파일을 doc.name으로 저장
-            file.write(doc.getvalue())
-            logger.info(f"Uploaded {file_name}")
-        if '.pdf' in doc.name:
-            loader = PyPDFLoader(file_name)
+        if doc.type == "application/pdf":
+            loader = PyPDFLoader(io.BytesIO(doc.getbuffer()))
             documents = loader.load_and_split()
-        elif '.docx' in doc.name:
-            loader = Docx2txtLoader(file_name)
+            doc_list.extend(documents)
+        elif doc.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+            loader = Docx2txtLoader(io.BytesIO(doc.getbuffer()))
             documents = loader.load_and_split()
-        elif '.pptx' in doc.name:
-            loader = UnstructuredPowerPointLoader(file_name)
+            doc_list.extend(documents)
+        elif doc.type == "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+            loader = UnstructuredPowerPointLoader(io.BytesIO(doc.getbuffer()))
             documents = loader.load_and_split()
-
-        doc_list.extend(documents)
+            doc_list.extend(documents)
+        elif doc.type == "text/csv":
+            text_data = get_text_from_csv(io.BytesIO(doc.getbuffer()))
+            doc_list.append(text_data)
+        else:
+            continue
     return doc_list
 
 
@@ -147,7 +147,6 @@ def get_conversation_chain(vetorestore,openai_api_key):
             return_source_documents=True,
             verbose = True
         )
-
     return conversation_chain
 
 
