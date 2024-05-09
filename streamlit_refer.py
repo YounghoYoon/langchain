@@ -24,7 +24,7 @@ def main():
     page_title="DirChat",
     page_icon=":books:")
 
-    st.title("_Private Data :red[QA Chat]_ :books:")
+    st.title("_SPAM MESSAGE 분류기 :red[TEST]_ :books:")
 
     if "conversation" not in st.session_state:
         st.session_state.conversation = None
@@ -53,7 +53,7 @@ def main():
 
     if 'messages' not in st.session_state:
         st.session_state['messages'] = [{"role": "assistant", 
-                                        "content": "안녕하세요! 주어진 문서에 대해 궁금하신 것이 있으면 언제든 물어봐주세요!"}]
+                                        "content": ""}]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
