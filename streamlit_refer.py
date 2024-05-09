@@ -100,7 +100,7 @@ def tiktoken_len(text):
 
 def get_text_from_csv(file_buffer):
     df = pd.read_csv(file_buffer)
-    text_data = ' '.join(df.astype(str).sum())
+    text_data = df.to_string(index=False)
     return text_data
 
 def get_text(docs):
@@ -119,9 +119,11 @@ def get_text(docs):
             documents = loader.load_and_split()
             doc_list.extend(documents)
         elif doc.type == "text/csv":
-            loader = CSVLoader(io.BytesIO(doc.getbuffer()))
-            documents = loader.load_and_split()
-            doc_list.append(documents)
+            # loader = CSVLoader(io.BytesIO(doc.getbuffer()))
+            # documents = loader.load_and_split()
+            # doc_list.append(documents)
+            csv_text = get_text_from_csv(io.StringIO(doc.getvalue().decode('utf-8')))
+            doc_list.append({"page_content": csv_text, "metadata": {"source": doc.name}})
         else:
             continue
     return doc_list
