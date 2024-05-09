@@ -7,7 +7,7 @@ from loguru import logger
 from langchain.chains import ConversationalRetrievalChain
 from langchain.chat_models import ChatOpenAI
 
-from langchain.document_loaders import PyPDFLoader, Docx2txtLoader, UnstructuredPowerPointLoader
+from langchain.document_loaders import PyPDFLoader, Docx2txtLoader, UnstructuredPowerPointLoader, CSVLoader
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
@@ -36,7 +36,7 @@ def main():
         st.session_state.processComplete = False
 
     with st.sidebar:
-        uploaded_files = st.file_uploader("Upload your file", type=['pdf', 'pptx', 'csv'], accept_multiple_files=True)
+        uploaded_files = st.file_uploader("Upload your file1", type=['pdf', 'pptx', 'docx', 'csv'], accept_multiple_files=True)
         openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
         process = st.button("Process")
     if process:
@@ -119,8 +119,9 @@ def get_text(docs):
             documents = loader.load_and_split()
             doc_list.extend(documents)
         elif doc.type == "text/csv":
-            text_data = get_text_from_csv(io.BytesIO(doc.getbuffer()))
-            doc_list.append(text_data)
+            loader = CSVLoader(io.BytesIO(doc.getbuffer()))
+            documents = loader.load_and_split()
+            doc_list.append(documents)
         else:
             continue
     return doc_list
